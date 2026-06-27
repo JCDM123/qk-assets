@@ -1,4 +1,4 @@
-"""email_template.py - Outlook-hardened branded landing email."""
+"""email_template.py - branded landing email (robust buttons, text always visible)."""
 import html as _html
 
 HEADER_URL = "https://raw.githubusercontent.com/JCDM123/qk-assets/main/email-QKheader.png"
@@ -21,21 +21,25 @@ def build_landing_email(patient_first, guardian, patient_full,
 
     def phone_btn(label, num):
         return f'''<td class="stack stack-pad" width="50%" valign="top" style="padding:6px;">
-          <!--[if mso]><v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" href="tel:0494180564" style="height:52px;v-text-anchor:middle;width:250px;" arcsize="16%" fillcolor="{BLUE}" stroke="f"><center style="color:#ffffff;font-family:{B};font-size:13px;font-weight:bold;"><![endif]-->
-          <a href="tel:0494180564" style="text-decoration:none;display:block;background-color:{BLUE};border-radius:8px;text-align:center;padding:11px 8px;mso-hide:all;">
-            <img src="{PHONE_ICON}" width="14" height="14" alt="" style="vertical-align:middle;border:0;margin-right:6px;"/><span style="color:#ffffff;font-family:{P};font-size:13px;font-weight:600;vertical-align:middle;">{label}</span><br/>
-            <span style="color:#cfe5ff;font-family:{P};font-size:12px;">{num}</span>
-          </a>
-          <!--[if mso]></center></v:roundrect><![endif]-->
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:{BLUE};border-radius:8px;">
+            <tr><td align="center" style="border-radius:8px;background-color:{BLUE};padding:11px 8px;font-family:{P};">
+              <a href="tel:0494180564" style="text-decoration:none;display:block;">
+                <img src="{PHONE_ICON}" width="14" height="14" alt="" style="vertical-align:middle;border:0;"/>&nbsp;<span style="color:#ffffff;font-size:13px;font-weight:600;">{label}</span><br/>
+                <span style="color:#cfe5ff;font-size:12px;">{num}</span>
+              </a>
+            </td></tr>
+          </table>
         </td>'''
 
     def email_btn(label, addr):
         return f'''<td class="stack stack-pad" width="50%" valign="top" style="padding:6px;">
-          <!--[if mso]><v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" href="mailto:{addr}" style="height:44px;v-text-anchor:middle;width:250px;" arcsize="18%" fillcolor="#EDEBDF" strokecolor="{BLUE}" strokeweight="1.5px"><center style="color:{BLUE};font-family:{B};font-size:12px;font-weight:bold;"><![endif]-->
-          <a href="mailto:{addr}" style="text-decoration:none;display:block;border:1.5px solid {BLUE};border-radius:8px;text-align:center;padding:11px 8px;mso-hide:all;">
-            <img src="{MAIL_ICON}" width="14" height="11" alt="" style="vertical-align:middle;border:0;margin-right:6px;"/><span style="color:{BLUE};font-family:{P};font-size:12px;font-weight:600;vertical-align:middle;">{label}</span>
-          </a>
-          <!--[if mso]></center></v:roundrect><![endif]-->
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:1.5px solid {BLUE};border-radius:8px;">
+            <tr><td align="center" style="border-radius:8px;padding:11px 8px;font-family:{P};">
+              <a href="mailto:{addr}" style="text-decoration:none;display:block;">
+                <img src="{MAIL_ICON}" width="14" height="11" alt="" style="vertical-align:middle;border:0;"/>&nbsp;<span style="color:{BLUE};font-size:12px;font-weight:600;">{label}</span>
+              </a>
+            </td></tr>
+          </table>
         </td>'''
 
     return f"""<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
