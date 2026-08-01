@@ -49,7 +49,8 @@ TEXT_CSS = f"""
 * {{ margin:0; padding:0; box-sizing:border-box; }}
 body {{ font-family:Poppins,Arial,sans-serif;
   -webkit-print-color-adjust:exact; print-color-adjust:exact; }}
-p {{ font-size:10.5pt; line-height:1.55; color:{BLUE}; margin-bottom:4.2mm; font-weight:400; }}
+p {{ font-size:10.5pt; line-height:1.55; color:{BLUE}; margin-bottom:4.2mm; font-weight:400; orphans:2; widows:2; }}
+.keep {{ page-break-inside:avoid; }}
 .head-orange {{ font-size:16pt; font-weight:700; color:{ORANGE}; margin:5.5mm 0 2.5mm;
   page-break-after:avoid; }}
 .head-blue {{ font-size:14.5pt; font-weight:600; color:{BLUE}; margin:0 0 6mm;
@@ -124,7 +125,24 @@ def _bullets(items):
 
 
 def _treatment_html(lines):
-    """Convert raw treatment-plan lines into styled HTML blocks."""
+    """Convert raw treatment-plan lines into styled HTML blocks.
+    The closing block (from 'Thank you again...' to the end: sign-off names,
+    'The Quantum Kid') is wrapped in a keep-together group so it can never
+    split across pages and orphan a line onto its own page."""
+    lines = list(lines)
+    split_at = None
+    for i, raw in enumerate(lines):
+        if raw.strip().lower().startswith("thank you again"):
+            split_at = i
+            break
+    if split_at is not None:
+        head = _treatment_blocks(lines[:split_at])
+        tail = _treatment_blocks(lines[split_at:])
+        return head + f'<div class="keep">{tail}</div>'
+    return _treatment_blocks(lines)
+
+
+def _treatment_blocks(lines):
     out = []
     buf = []
 
