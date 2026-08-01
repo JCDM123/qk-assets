@@ -2,7 +2,6 @@
 import html as _html
 
 HEADER_URL = "https://raw.githubusercontent.com/JCDM123/qk-assets/main/email-QKheader.png"
-PAPERCLIP_URL = "https://raw.githubusercontent.com/JCDM123/qk-assets/main/paperclip_blue.png"
 PHONE_ICON = "https://raw.githubusercontent.com/JCDM123/qk-assets/main/icon_phone_white.png"
 MAIL_ICON = "https://raw.githubusercontent.com/JCDM123/qk-assets/main/icon_mail_blue.png"
 
@@ -58,18 +57,12 @@ a{{text-decoration:none;}}
   <tr><td style="padding:0;"><img src="{HEADER_URL}" width="600" alt="The Quantum Kid" style="display:block;width:100%;max-width:600px;height:auto;border:0;"/></td></tr>
   <tr><td class="px" style="padding:30px 44px 0;">
     <h1 class="h1" style="margin:0 0 18px;font-family:{P};font-size:25px;font-weight:600;color:{BLUE};text-align:center;letter-spacing:0.3px;">{pf}'s Treatment Plan</h1>
-    <p style="margin:0 0 16px;font-family:{B};font-size:15px;line-height:1.7;color:#3a3a3a;">Hi {gd},</p>
+    <p style="margin:0 0 16px;font-family:{B};font-size:15px;line-height:1.7;color:#3a3a3a;">Dear {gd},</p>
     <p style="margin:0 0 16px;font-family:{B};font-size:15px;line-height:1.7;color:#3a3a3a;">Thank you for trusting The Quantum Kid with {pf}'s care. We loved having you both in the clinic.</p>
     <p style="margin:0 0 26px;font-family:{B};font-size:15px;line-height:1.7;color:#3a3a3a;">{pf}'s personalised treatment plan is attached. Our Family Care Team will be in touch shortly with the next steps to get started.</p>
   </td></tr>
-  <tr><td class="px" style="padding:0 44px;">
-    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#ffffff;border:1px solid #e0ddd0;border-radius:10px;"><tr><td align="center" style="padding:22px;">
-      <img src="{PAPERCLIP_URL}" width="28" height="28" alt="Attachment" style="display:block;margin:0 auto 10px auto;width:28px;height:28px;border:0;"/>
-      <div style="font-family:{P};font-size:15px;font-weight:600;color:#231F20;">{pfull} - Treatment Plan.pdf</div>
-      <div style="font-family:{B};font-size:13px;color:#888;margin-top:4px;">Your treatment plan is attached to this email</div>
-    </td></tr></table>
-  </td></tr>
-  <tr><td class="px" style="padding:28px 44px 14px;"><div style="font-family:{B};font-size:13px;color:#888;text-align:center;">Please don't reply to this email. We'd love to hear from you here:</div></td></tr>
+  
+  <tr><td class="px" style="padding:28px 44px 14px;"><div style="font-family:{B};font-size:15px;font-weight:bold;color:#3a3a3a;text-align:center;">Please don't reply to this email. We'd love to hear from you here:</div></td></tr>
   <tr><td class="px" style="padding:0 38px 0;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>
     {phone_btn("North Sydney", phone_ns)}
     {phone_btn("Byron Bay", phone_bb)}
