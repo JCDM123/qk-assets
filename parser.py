@@ -8,7 +8,8 @@ leftover-placeholder safety net, and certificate free-text capture for [3].
 import re
 
 EMAIL_RE = re.compile(r"[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}")
-CODE_RE = re.compile(r"^\s*\[\s*([0-9])\s*\]\s*$")
+CODE_RE = re.compile(r"^[\s\u00a0]*\[\s*([0-9])\s*\][\s\u00a0]*$")
+CODE_PREFIX_RE = re.compile(r"^[\s\u00a0]*\[\s*([0-9])\s*\][\s\u00a0]*")
 
 SECTION_HEADERS = [
     "key points outlined",
@@ -57,13 +58,24 @@ def _is_header(line):
 
 
 def _extract_template_code(lines):
-    """Find [n] on its own line in the first lines of the body; strip it.
-    Returns (code:int, lines_without_code). Default 1 when absent."""
+    """Find [n] at the START of any of the first body lines (alone on the line
+    OR merged into a following line by email-client line-break rewriting,
+    e.g. Outlook turning '[2]\nHEADING' into '[2] HEADING').
+    Strips only the code; returns (code:int, cleaned_lines). Default 1."""
     for idx, line in enumerate(lines[:10]):
-        m = CODE_RE.match(line)
+        if not line.strip():
+            continue
+        m = CODE_PREFIX_RE.match(line)
         if m:
             code = int(m.group(1))
-            return (code if code in (1, 2, 3) else 1), lines[:idx] + lines[idx + 1:]
+            code = code if code in (1, 2, 3) else 1
+            remainder = CODE_PREFIX_RE.sub("", line, count=1)
+            if remainder.strip():
+                cleaned = lines[:idx] + [remainder] + lines[idx + 1:]
+            else:
+                cleaned = lines[:idx] + lines[idx + 1:]
+            return code, cleaned
+        break  # only the first non-empty line may carry the code
     return 1, lines
 
 
