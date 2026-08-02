@@ -31,6 +31,44 @@ PHONE = "0494180564"
 
 MAX_FLOW_PAGES = 7  # cover + 7 flow + quote + back = 10 max
 
+# ── per-template skin configuration (multi-tenant pattern: template -> config) ──
+SKINS = {
+    1: {  # QK standard
+        "assets": {"cover": "page1_cover.png", "opening": "page2_letter.png",
+                   "img_a": "page3_cranial.png", "clean": "page4_treatment.png",
+                   "img_b": "page_flow_b.png", "img_c": "page_flow_c.png",
+                   "quote": "page5_quote.png", "back": "page_back_v3.png"},
+        # bottom margins per flow page index (top is 38 for p1, 14 otherwise)
+        "bottoms": {1: 30, 2: 118, 3: 34, 4: 100, 5: 34, 6: 100, 7: 34},
+        "hotspots": [
+            ("https://www.thequantumkid.com.au", 60.4, 213.9, 84.6, 9.8),
+            ("tel:0494180564", 52.3, 262.2, 25.6, 7.3),
+            ("mailto:northsydney@thequantumkid.com.au", 52.3, 266.8, 65.9, 7.0),
+            ("tel:0494180564", 124.6, 262.2, 25.3, 7.3),
+            ("mailto:byronbay@thequantumkid.com.au", 124.6, 266.8, 60.6, 7.0),
+        ],
+    },
+    2: {  # QK Dental
+        "assets": {"cover": "dental_01.png", "opening": "dental_02.png",
+                   "img_a": "dental_03.png", "clean": "dental_04.png",
+                   "img_b": "dental_05.png", "img_c": "dental_07.png",
+                   "quote": "dental_09.png", "back": "dental_10.png"},
+        "bottoms": {1: 30, 2: 85, 3: 34, 4: 95, 5: 34, 6: 103, 7: 34},
+        "hotspots": [
+            ("https://www.qkdental.com.au", 70.9, 214.8, 63.5, 7.8),
+            ("tel:0299232478", 90.0, 258.9, 24.3, 5.0),
+            ("mailto:hello@qkdental.com.au", 82.2, 263.2, 39.9, 5.3),
+        ],
+    },
+}
+
+CERT_LOGO = "cert_logo.png"
+CERT_SIG = "cert_signature.png"
+CERT_DATE_RE = re.compile(
+    r"((?:Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday),?\s+)?"
+    r"(\d{1,2}\s+(?:January|February|March|April|May|June|July|August|September|"
+    r"October|November|December)\s+\d{4})")
+
 
 def _b64(path):
     with open(path, "rb") as f:
@@ -92,24 +130,15 @@ def _fixed_page(bg_b64, inner):
 #              -> 5 clean -> 6 imagery C -> 7 clean -> (8+ clean, warned)
 # Bottom margins keep text clear of imagery / footers per page.
 
-def _flow_css(bgs):
-    """bgs: dict page_index -> b64 background. Build @page rules."""
-    # margins: (top_mm, bottom_mm) per flow page index
-    margins = {
-        1: (38, 30),    # opening page: below big heading, above footer
-        2: (14, 118),   # cranial imagery page: image from ~63%
-        3: (14, 34),    # clean letterhead
-        4: (14, 100),   # imagery B: image from ~70%
-        5: (14, 34),    # clean
-        6: (14, 100),   # imagery C: image from ~70%
-        7: (14, 34),    # clean
-    }
+def _flow_css(bgs, bottoms):
+    """bgs: dict key -> b64 background; bottoms: page idx -> bottom margin mm."""
+    margins = {i: ((38 if i == 1 else 14), bottoms[i]) for i in range(1, 8)}
     rules = [f"""
 @page {{ size: 210mm 297mm; margin: 14mm 12.2mm 34mm 12.2mm;
   background-image: url(data:image/png;base64,{bgs['clean']});
   background-size: 210mm 297mm; background-repeat:no-repeat;
   background-position: -12.2mm -14mm; }}"""]
-    order = ['opening', 'cranial', 'clean', 'img_b', 'clean', 'img_c', 'clean']
+    order = ['opening', 'img_a', 'clean', 'img_b', 'clean', 'img_c', 'clean']
     for i, key in enumerate(order, start=1):
         top, bottom = margins[i]
         rules.append(f"""
@@ -199,7 +228,7 @@ def _section(title, items):
             f'<ul>{_bullets(items)}</ul>')
 
 
-def _build_flow_html(data, bgs):
+def _build_flow_html(data, bgs, bottoms):
     first = _esc(data.get("patient_first", ""))
     goals = "".join(f"<li>{i+1}. {_esc(g)}</li>"
                     for i, g in enumerate(data.get("goals", [])))
@@ -231,7 +260,7 @@ def _build_flow_html(data, bgs):
         parts.append(_treatment_html(data["treatment_lines"]))
     body = "\n".join(p for p in parts if p)
     return (f'<!DOCTYPE html><html><head><meta charset="UTF-8"/>{FONT_LINK}'
-            f'<style>{_flow_css(bgs)}</style></head><body>{body}</body></html>')
+            f'<style>{_flow_css(bgs, bottoms)}</style></head><body>{body}</body></html>')
 
 
 # ── clickable hotspot helper for the back page (coords from design, in mm) ──
@@ -243,18 +272,23 @@ def _hotspot(href, left, top, width, height):
 
 
 def generate_pdf(data, out_path):
-    """data: dict from parser.parse_cliniko_letter; writes flow PDF to out_path."""
+    """data: dict from parser.parse_cliniko_letter; routes by data['template']."""
+    template = data.get("template", 1)
+    if template == 3:
+        return generate_certificate(data, out_path)
+    skin = SKINS.get(template, SKINS[1])
     a = lambda f: _b64(os.path.join(ASSETS, f))
+    A = skin["assets"]
     bgs = {
-        "opening": a("page2_letter.png"),
-        "cranial": a("page3_cranial.png"),
-        "clean":   a("page4_treatment.png"),
-        "img_b":   a("page_flow_b.png"),
-        "img_c":   a("page_flow_c.png"),
+        "opening": a(A["opening"]),
+        "img_a":   a(A["img_a"]),
+        "clean":   a(A["clean"]),
+        "img_b":   a(A["img_b"]),
+        "img_c":   a(A["img_c"]),
     }
-    cover_bg = a("page1_cover.png")
-    quote_bg = a("page5_quote.png")
-    back_bg = a("page_back_v3.png")
+    cover_bg = a(A["cover"])
+    quote_bg = a(A["quote"])
+    back_bg = a(A["back"])
 
     first = data.get("patient_first", "")
     full = data.get("patient_full") or first
@@ -265,7 +299,7 @@ def generate_pdf(data, out_path):
      font-size:29pt; font-weight:700; color:{BLUE};">{_esc(full)}</div>""")
 
     # ── flowing content ──
-    flow_html = _build_flow_html(data, bgs)
+    flow_html = _build_flow_html(data, bgs, skin["bottoms"])
     flow_pdf = weasyprint.HTML(string=flow_html, base_url="/").write_pdf(
         presentational_hints=True)
     flow_reader = PdfReader(BytesIO(flow_pdf))
@@ -279,13 +313,8 @@ def generate_pdf(data, out_path):
     quote = _fixed_page(quote_bg, "")
 
     # ── back page: artwork + clickable contacts (coords from V3 design) ──
-    back = _fixed_page(back_bg, "".join([
-        _hotspot(URL_LINK,               60.4, 213.9, 84.6, 9.8),   # website
-        _hotspot(f"tel:{PHONE}",         52.3, 262.2, 25.6, 7.3),   # NS phone
-        _hotspot(f"mailto:{EMAIL_NS}",   52.3, 266.8, 65.9, 7.0),   # NS email
-        _hotspot(f"tel:{PHONE}",        124.6, 262.2, 25.3, 7.3),   # BB phone
-        _hotspot(f"mailto:{EMAIL_BB}",  124.6, 266.8, 60.6, 7.0),   # BB email
-    ]))
+    back = _fixed_page(back_bg, "".join(
+        _hotspot(href, x, y, w, h) for href, x, y, w, h in skin["hotspots"]))
 
     writer = PdfWriter()
     for html_page in (cover,):
@@ -301,4 +330,67 @@ def generate_pdf(data, out_path):
 
     with open(out_path, "wb") as f:
         writer.write(f)
+    return out_path
+
+
+# ── [3] Medical Certificate: single fixed A4, free text with auto-bolded dates ──
+
+def _bold_dates(t):
+    return CERT_DATE_RE.sub(lambda m: f"<b>{m.group(0)}</b>", _esc(t))
+
+
+def generate_certificate(data, out_path):
+    logo_b64 = _b64(os.path.join(ASSETS, CERT_LOGO))
+    sig_b64 = _b64(os.path.join(ASSETS, CERT_SIG))
+    name = _esc(data.get("patient_full") or data.get("patient_first") or "")
+    issue = _esc(data.get("date", ""))
+    paras = "".join(f"<p class='custom'>{_bold_dates(t)}</p>"
+                    for t in data.get("cert_text", []))
+    html = f"""<!DOCTYPE html><html><head><meta charset="UTF-8"/>{FONT_LINK}
+<style>
+@page {{ size: 210mm 297mm; margin: 0; }}
+* {{ margin:0; padding:0; box-sizing:border-box; }}
+body {{ font-family:Poppins,Arial,sans-serif; width:210mm; height:297mm; overflow:hidden;
+  background:#EDEBDF; -webkit-print-color-adjust:exact; print-color-adjust:exact; }}
+.wrap {{ position:absolute; top:0; left:0; width:210mm; height:297mm; text-align:center; }}
+.logo {{ margin-top:14mm; width:62mm; display:block; margin-left:auto; margin-right:auto; }}
+.doctitle {{ margin-top:9mm; font-size:15pt; letter-spacing:4.5pt; color:{DARK};
+  font-weight:400; text-transform:uppercase; }}
+.rule {{ width:34mm; height:0.9mm; background:{ORANGE}; margin:8mm auto 0; border-radius:1mm; }}
+.certify {{ margin-top:12mm; font-size:11.5pt; color:{DARK}; }}
+.patient {{ margin-top:4mm; font-size:26pt; font-weight:700; color:{BLUE}; }}
+.customblock {{ margin:9mm auto 0; width:138mm; text-align:center; }}
+p.custom {{ font-size:11.5pt; color:{DARK}; line-height:1.8; margin-bottom:5mm; }}
+p.custom b {{ font-weight:600; }}
+.sigzone {{ position:absolute; bottom:46mm; left:0; width:210mm; text-align:center; }}
+.sigimg {{ height:17mm; display:block; margin:0 auto 1.5mm; }}
+.sigline {{ width:64mm; border-bottom:0.4mm solid {DARK}; margin:0 auto 2.5mm; }}
+.signame {{ font-size:11.5pt; font-weight:600; color:{DARK}; }}
+.sigrole {{ font-size:10pt; color:{DARK}; opacity:0.75; margin-top:1mm; }}
+.ahpra {{ font-size:9pt; color:{DARK}; opacity:0.65; margin-top:1mm; }}
+.issued {{ font-size:9.5pt; color:{DARK}; opacity:0.75; margin-top:4mm; }}
+.footer {{ position:absolute; bottom:14mm; left:0; width:210mm; text-align:center;
+  font-size:8.5pt; letter-spacing:1.8pt; color:{DARK}; opacity:0.55; text-transform:uppercase; }}
+</style></head><body>
+<div class="wrap">
+  <img class="logo" src="data:image/png;base64,{logo_b64}"/>
+  <div class="doctitle">Medical Certificate</div>
+  <div class="rule"></div>
+  <div class="certify">This is to certify that</div>
+  <div class="patient">{name}</div>
+  <div class="customblock">{paras}</div>
+</div>
+<div class="sigzone">
+  <img class="sigimg" src="data:image/png;base64,{sig_b64}"/>
+  <div class="sigline"></div>
+  <div class="signame">Dr Jalal Khan</div>
+  <div class="sigrole">Dentist</div>
+  <div class="ahpra">AHPRA Registration: DEN0001234567</div>
+  <div class="issued">Date of issue: {issue}</div>
+</div>
+<div class="footer">The Quantum Kid &middot; North Sydney &amp; Byron Bay &middot; www.thequantumkid.com.au</div>
+</body></html>"""
+    pdf = weasyprint.HTML(string=html, base_url="/").write_pdf(presentational_hints=True)
+    with open(out_path, "wb") as f:
+        f.write(pdf)
     return out_path
