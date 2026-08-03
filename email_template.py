@@ -2,14 +2,40 @@
 import html as _html
 
 HEADER_URL = "https://raw.githubusercontent.com/JCDM123/qk-assets/main/email-QKheader.png"
+DENTAL_HEADER_URL = "https://raw.githubusercontent.com/JCDM123/qk-assets/main/email-QKDentalheader.png"
+
+# per-template email skin (mirrors the generator SKINS pattern)
+EMAIL_SKINS = {
+    1: {
+        "header_url": HEADER_URL,
+        "brand": "The Quantum Kid",
+        "website": "https://www.thequantumkid.com.au",
+        "website_label": "www.thequantumkid.com.au",
+        "locations": [
+            ("North Sydney", "0494 180 564", "northsydney@thequantumkid.com.au"),
+            ("Byron Bay", "0494 180 564", "byronbay@thequantumkid.com.au"),
+        ],
+        "footer": "The Quantum Kid &middot; North Sydney &amp; Byron Bay",
+    },
+    2: {
+        "header_url": DENTAL_HEADER_URL,
+        "brand": "QK Dental",
+        "website": "https://www.qkdental.com.au",
+        "website_label": "www.qkdental.com.au",
+        "locations": [
+            ("QK Dental", "(02) 9923 2478", "hello@qkdental.com.au"),
+        ],
+        "footer": "QK Dental &middot; 1/90 Arthur Street, North Sydney",
+    },
+}
 PHONE_ICON = "https://raw.githubusercontent.com/JCDM123/qk-assets/main/icon_phone_white.png"
 MAIL_ICON = "https://raw.githubusercontent.com/JCDM123/qk-assets/main/icon_mail_blue.png"
 
-def build_landing_email(patient_first, guardian, patient_full,
-        website="https://www.thequantumkid.com.au",
-        phone_ns="0494 180 564", phone_bb="0494 180 564",
-        email_ns="northsydney@thequantumkid.com.au",
-        email_bb="byronbay@thequantumkid.com.au"):
+def build_landing_email(patient_first, guardian, patient_full, template=1):
+    skin = EMAIL_SKINS.get(template, EMAIL_SKINS[1])
+    brand = skin["brand"]
+    website = skin["website"]
+    header_url = skin["header_url"]
     pf = _html.escape(patient_first or "your child")
     gd = _html.escape(guardian or "there")
     pfull = _html.escape(patient_full or patient_first or "Patient")
@@ -54,22 +80,20 @@ a{{text-decoration:none;}}
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#FFFFFF;">
 <tr><td align="center" style="padding:24px 12px;">
 <table role="presentation" class="container" width="600" cellpadding="0" cellspacing="0" style="width:600px;max-width:600px;background-color:#EDEBDF;border-radius:14px;overflow:hidden;">
-  <tr><td style="padding:0;"><img src="{HEADER_URL}" width="600" alt="The Quantum Kid" style="display:block;width:100%;max-width:600px;height:auto;border:0;"/></td></tr>
+  <tr><td style="padding:0;"><img src="{header_url}" width="600" alt="{brand}" style="display:block;width:100%;max-width:600px;height:auto;border:0;"/></td></tr>
   <tr><td class="px" style="padding:30px 44px 0;">
     <h1 class="h1" style="margin:0 0 18px;font-family:{P};font-size:25px;font-weight:600;color:{BLUE};text-align:center;letter-spacing:0.3px;">{pf}'s Treatment Plan</h1>
     <p style="margin:0 0 16px;font-family:{B};font-size:15px;line-height:1.7;color:#3a3a3a;">Dear {gd},</p>
-    <p style="margin:0 0 16px;font-family:{B};font-size:15px;line-height:1.7;color:#3a3a3a;">Thank you for trusting The Quantum Kid with {pf}'s care. We loved having you both in the clinic.</p>
+    <p style="margin:0 0 16px;font-family:{B};font-size:15px;line-height:1.7;color:#3a3a3a;">Thank you for trusting {brand} with {pf}'s care. We loved having you both in the clinic.</p>
     <p style="margin:0 0 26px;font-family:{B};font-size:15px;line-height:1.7;color:#3a3a3a;">{pf}'s personalised treatment plan is attached. Our Family Care Team will be in touch shortly with the next steps to get started.</p>
   </td></tr>
   
   <tr><td class="px" style="padding:28px 44px 14px;"><div style="font-family:{B};font-size:15px;font-weight:bold;color:#3a3a3a;text-align:center;">Please don't reply to this email. We'd love to hear from you here:</div></td></tr>
   <tr><td class="px" style="padding:0 38px 0;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>
-    {phone_btn("North Sydney", phone_ns)}
-    {phone_btn("Byron Bay", phone_bb)}
+    {"".join(phone_btn(loc, ph) for loc, ph, _ in skin["locations"])}
   </tr></table></td></tr>
   <tr><td class="px" style="padding:0 38px 8px;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>
-    {email_btn("Email North Sydney", email_ns)}
-    {email_btn("Email Byron Bay", email_bb)}
+    {"".join(email_btn(("Email " + loc) if len(skin["locations"]) > 1 else "Email us", em) for loc, _, em in skin["locations"])}
   </tr></table></td></tr>
   <tr><td align="center" style="padding:18px 44px 0;">
     <!--[if mso]><v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" href="{website}" style="height:44px;v-text-anchor:middle;width:200px;" arcsize="18%" fillcolor="{ORANGE}" stroke="f"><center style="color:#ffffff;font-family:{B};font-size:14px;font-weight:bold;">Visit our website</center></v:roundrect><![endif]-->
@@ -77,5 +101,5 @@ a{{text-decoration:none;}}
     <a href="{website}" style="display:inline-block;background-color:{ORANGE};border-radius:8px;padding:13px 34px;font-family:{P};font-size:14px;font-weight:600;color:#ffffff;text-decoration:none;">Visit our website</a>
     <!--<![endif]-->
   </td></tr>
-  <tr><td align="center" style="padding:28px 44px 34px;"><div style="font-family:{B};font-size:12px;color:#999;line-height:1.6;">The Quantum Kid &middot; North Sydney &amp; Byron Bay<br/>www.thequantumkid.com.au</div></td></tr>
+  <tr><td align="center" style="padding:28px 44px 34px;"><div style="font-family:{B};font-size:12px;color:#999;line-height:1.6;">{skin["footer"]}<br/>{skin["website_label"]}</div></td></tr>
 </table></td></tr></table></body></html>"""
