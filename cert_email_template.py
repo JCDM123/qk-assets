@@ -45,8 +45,8 @@ def build_certificate_email(patient_first, guardian, patient_full):
     loc_html = "".join(loc_row(n, p, a) for n, p, a in LOCATIONS)
 
     def site_btn(label, url):
-        return f"""<td width="50%" align="center" valign="top" style="padding:6px;">
-          <a href="{url}" style="display:block;background-color:{ORANGE};border-radius:8px;padding:13px 10px;font-family:{P};font-size:13px;font-weight:600;color:#ffffff;text-decoration:none;">{label}</a>
+        return f"""<td width="48%" align="center" bgcolor="{ORANGE}" style="background-color:{ORANGE};border-radius:8px;padding:14px 8px;mso-padding-alt:14px 8px;">
+          <a href="{url}" style="font-family:{P};font-size:13px;font-weight:600;color:#ffffff;text-decoration:none;white-space:nowrap;display:inline-block;"><span style="color:#ffffff;">{label}</span></a>
         </td>"""
 
     return f"""<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
@@ -69,7 +69,7 @@ a{{text-decoration:none;}}
   <tr><td class="px" style="padding:24px 44px 0;">
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:2px solid {BLUE};border-radius:10px;background-color:#ffffff;">
       <tr><td align="center" style="padding:26px 30px 22px;">
-        <div style="font-family:{P};font-size:24px;letter-spacing:4px;color:{INK};font-weight:400;margin-top:8px;">MEDICAL CERTIFICATE</div>
+        <div style="font-family:{P};font-size:23px;letter-spacing:9px;line-height:1.5;color:{INK};font-weight:400;margin-top:8px;padding-left:9px;">MEDICAL CERTIFICATE</div>
         <div style="width:60px;height:3px;background-color:{ORANGE};margin:14px auto 0;border-radius:2px;"></div>
         <p style="margin:20px 0 4px;font-family:{B};font-size:15px;line-height:1.7;color:#3a3a3a;">A medical certificate has been issued for</p>
         <p style="margin:0 0 6px;font-family:{P};font-size:22px;font-weight:600;color:{BLUE};">{pfull}</p>
@@ -90,8 +90,9 @@ a{{text-decoration:none;}}
 
   <tr><td class="px" style="padding:22px 38px 0;">
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>
-      {site_btn("Visit The Quantum Kid", QK_SITE)}
-      {site_btn("Visit QK Dental", DENTAL_SITE)}
+      {site_btn("The Quantum Kid", QK_SITE)}
+      <td width="4%" style="font-size:0;line-height:0;">&nbsp;</td>
+      {site_btn("QK Dental", DENTAL_SITE)}
     </tr></table>
   </td></tr>
 
